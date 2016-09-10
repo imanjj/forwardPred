@@ -1,3 +1,4 @@
+#! /home/pourtaran/torch/install/bin/th
 require 'torch'   -- torch
 require 'image'   -- for image transforms
 require 'nn'      -- provides all sorts of trainable modules/layers
@@ -16,7 +17,7 @@ cmd:option('-threads', 2, 'number of threads')
 -- training:
 cmd:option('-save', 'results', 'subdirectory to save/log experiments in')
 cmd:option('-plot', false, 'live plot')
-cmd:option('-learningRate', 1e-1, 'learning rate at t=0')
+cmd:option('-learningRate', 1e-2, 'learning rate at t=0')
 cmd:option('-batchSize', 1, 'mini-batch size (1 = pure stochastic)')
 cmd:option('-weightDecay', 0, 'weight decay (SGD only)')
 cmd:option('-momentum', 0, 'momentum (SGD only)')
@@ -29,33 +30,34 @@ opt = cmd:parse(arg or {})
 
 
 -- XOR
-xt = torch.Tensor({{-1,-1},{1,1},{-1,1},{1,-1}})
-yt = torch.Tensor({'1','1','2','2'})
+--xt = torch.Tensor({{-1,-1},{1,1},{-1,1},{1,-1}})
+--yt = torch.Tensor({'1','1','2','2'})
 
 -- AND
---xt = torch.Tensor({{-1,-1},{1,1},{-1,1},{1,-1}})
---yt = torch.Tensor({'1','2','1','1'})
+xt = torch.Tensor({{-1,-1},{1,1},{-1,1},{1,-1}})
+yt = torch.Tensor({'1','2','1','1'})
 
 -- 2-class problem
 noutputs = 2
 
 -- number of hidden units (for MLP only):
 ninputs = 2
-nhiddens = 4
+nhiddens = 2 
 
--- Simple 1-layer neural network, with NormalLinear hidden units
+-- Simple 1-layer neural network, with NormalforwardPred hidden units
    model = nn.Sequential()
    model:add(nn.Reshape(ninputs))
-   model:add(nn.Linear(ninputs,nhiddens))
+   model:add(nn.forwardPred(ninputs,nhiddens))
    --model:add(nn.ReLU())
-   model:add(nn.Tanh())
-   model:add(nn.Linear(nhiddens,noutputs))
-   model:add(nn.Tanh())
+   model:add(nn.ReLU())
+   model:add(nn.forwardPred(nhiddens,noutputs))
+   model:add(nn.ReLU())
    model:add(nn.LogSoftMax())
 
 -- The loss works like the MultiMarginCriterion: it takes
 -- a vector of classes, and the index of the grountruth class
 -- as arguments.
+
 
 criterion = nn.ClassNLLCriterion()
 
@@ -117,8 +119,8 @@ function train()
          return f,gradParameters
       end
    optimMethod(feval, parameters, optimState)
-   -- print confusion matrix
-   -- print(confusion)
+   --print confusion matrix
+   print(confusion)
    trainLogger:add{['% mean class accuracy (train set)'] = confusion.totalValid * 100}
    confusion:zero()
    -- save/log current net
@@ -133,7 +135,9 @@ function train()
    epoch = epoch + 1
 end
 
-for i = 1,100 do
+for i = 1,5 do
    -- train/test
+   print('iteration: '.. i)
+
    train(trainData)  
 end
